@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0f19" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="app.css" />
+  <title>Propertease Planner</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="title">Propertease Planner</div>
+        <div class="sub">Offline-first PWA</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input id="month" type="month" />
+      <button id="saveBtn" class="btn">Save</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card">
+      <h2>Month Notes</h2>
+      <p class="hint">This auto-loads per month. Works offline after first load.</p>
+      <textarea id="notes" placeholder="Type something…"></textarea>
+      <div class="row">
+        <button id="copyBtn" class="btn secondary">Copy</button>
+        <span id="status" class="status"></span>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
