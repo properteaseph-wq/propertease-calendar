@@ -1,6 +1,15 @@
 const CACHE = "propertease-pwa-v1";
-const ASSETS = ["./", "./index.html", "./app.css", "./app.js", "./manifest.webmanifest"];
-
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./sw.js",
+  "./css/app.css",
+  "./js/app.js",
+  "./js/db.js",
+  "./js/ui.js",
+  "./js/prompt-engine.js"
+];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
   self.skipWaiting();
