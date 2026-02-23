@@ -88,12 +88,12 @@ function monthParts(yyyymmStr) {
   return { y, mIndex: m - 1 };
 }
 
-function loadCurrentMonth() {
-  state.monthData = loadMonth(state.month);
+async function loadCurrentMonth() {
+  state.monthData = await loadMonth(db, state.month);
 }
 
-function saveCurrentMonth() {
-  saveMonth(state.month, state.monthData);
+async function saveCurrentMonth() {
+  await saveMonth(db, state.month, state.monthData);
 }
 
 function getDayObj(dayKey) {
