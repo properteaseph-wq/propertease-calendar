@@ -1,74 +1,39 @@
-// Minimal offline PWA + per-month autosave using localStorage (starter).
-// We’ll upgrade to IndexedDB later once UI + flows are final.
-
-const monthInput = document.getElementById("month");
-const notes = document.getElementById("notes");
-const saveBtn = document.getElementById("saveBtn");
-const copyBtn = document.getElementById("copyBtn");
-const statusEl = document.getElementById("status");
-
-function monthKey(value) {
-  // value is YYYY-MM
-  return `propertease.month.${value}`;
+export function fmtMonthLabel(y, m) {
+  const d = new Date(y, m, 1);
+  return d.toLocaleString(undefined, { month: "long", year: "numeric" });
 }
 
-function setStatus(msg) {
-  statusEl.textContent = msg;
-  clearTimeout(setStatus._t);
-  setStatus._t = setTimeout(() => (statusEl.textContent = ""), 1600);
+export function yyyymm(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
 }
 
-function saveCurrent() {
-  const key = monthKey(monthInput.value);
-  localStorage.setItem(key, notes.value);
-  localStorage.setItem("propertease.lastMonth", monthInput.value);
-  setStatus("Saved ✅");
-}
+export function buildMonthGrid(year, monthIndex) {
+  const first = new Date(year, monthIndex, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const prevDays = new Date(year, monthIndex, 0).getDate();
 
-function loadMonth(value) {
-  const key = monthKey(value);
-  notes.value = localStorage.getItem(key) || "";
-  setStatus("Loaded 📦");
-}
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const dayNum = i - startDow + 1;
+    let y = year, m = monthIndex, d = dayNum, dim = false;
 
-function initMonth() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const defaultMonth = `${y}-${m}`;
-  const last = localStorage.getItem("propertease.lastMonth") || defaultMonth;
-  monthInput.value = last;
-  loadMonth(last);
-}
+    if (dayNum <= 0) {
+      dim = true;
+      d = prevDays + dayNum;
+      m = monthIndex - 1;
+      if (m < 0) { m = 11; y = year - 1; }
+    } else if (dayNum > daysInMonth) {
+      dim = true;
+      d = dayNum - daysInMonth;
+      m = monthIndex + 1;
+      if (m > 11) { m = 0; y = year + 1; }
+    }
 
-monthInput.addEventListener("change", () => {
-  // autosave previous state first
-  saveCurrent();
-  loadMonth(monthInput.value);
-});
-
-saveBtn.addEventListener("click", saveCurrent);
-
-notes.addEventListener("input", () => {
-  // silent autosave
-  const key = monthKey(monthInput.value);
-  localStorage.setItem(key, notes.value);
-});
-
-copyBtn.addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(notes.value || "");
-    setStatus("Copied ✨");
-  } catch {
-    setStatus("Copy blocked on this browser");
+    const key = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    cells.push({ key, y, m, d, dim });
   }
-});
-
-// Register Service Worker for offline caching
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
-  });
+  return cells;
 }
-
-initMonth();

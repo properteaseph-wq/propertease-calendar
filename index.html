@@ -1,105 +1,122 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b0f19" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="css/app.css" />
-  <title>Propertease Planner</title>
-</head>
-<body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo-dot"></div>
-      <div>
-        <div class="title">Propertease Planner</div>
-        <div class="sub">Google Calendar month view, offline-first</div>
-      </div>
-    </div>
+const DB_NAME = "propertease_calendar_db";
+const DB_VERSION = 1;
 
-    <div class="controls">
-      <button id="prevBtn" class="btn ghost" title="Previous month">◀</button>
-      <div class="monthWrap">
-        <div id="monthLabel" class="monthLabel">March 2026</div>
-        <input id="monthPicker" type="month" class="monthPicker" aria-label="Pick month" />
-      </div>
-      <button id="nextBtn" class="btn ghost" title="Next month">▶</button>
-      <button id="todayBtn" class="btn secondary">Today</button>
-      <button id="saveBtn" class="btn">Save</button>
-      <span id="savePill" class="savePill" aria-live="polite">Offline</span>
-    </div>
-  </header>
+const STORE_MONTHS = "months";
+const STORE_META = "meta";
 
-  <main class="shell">
-    <aside class="side">
-      <div class="panel">
-        <div class="panelTitle">Categories</div>
-        <div id="categoryList" class="chipGrid"></div>
+const NS_OLD = "propertease.calendar.v1"; // old localStorage namespace
 
-        <div class="panelTitle">Mode</div>
-        <label class="toggle">
-          <input id="toggleProject" type="checkbox" />
-          <span>Allow project mention (optional)</span>
-        </label>
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
 
-        <div class="panelTitle">Style Pack</div>
-        <select id="stylePack" class="select">
-          <option value="editorial">Modern Editorial</option>
-          <option value="clean3d">Clean 3D UI</option>
-          <option value="luxMinimal">Luxury Minimal</option>
-          <option value="boldInfographic">Bold Infographic</option>
-        </select>
-      </div>
-    </aside>
+    req.onupgradeneeded = () => {
+      const db = req.result;
 
-    <section class="main">
-      <div class="calendarHead">
-        <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
-      </div>
+      if (!db.objectStoreNames.contains(STORE_MONTHS)) {
+        db.createObjectStore(STORE_MONTHS, { keyPath: "yyyymm" });
+      }
 
-      <div id="grid" class="grid" aria-label="Month calendar grid"></div>
-    </section>
+      if (!db.objectStoreNames.contains(STORE_META)) {
+        db.createObjectStore(STORE_META, { keyPath: "key" });
+      }
+    };
 
-    <aside class="right">
-      <div class="panel">
-        <div class="panelTitle">Selected Day</div>
-        <div id="selectedMeta" class="meta">Select a date</div>
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
 
-        <label class="field">
-          <span>Caption or Idea</span>
-          <textarea id="idea" placeholder="Educational, authority-first..." rows="6"></textarea>
-        </label>
+function txDone(tx) {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error("IndexedDB tx error"));
+    tx.onabort = () => reject(tx.error || new Error("IndexedDB tx abort"));
+  });
+}
 
-        <div class="row">
-          <button id="genBtn" class="btn secondary">Generate Nano Prompt</button>
-          <button id="copyBtn" class="btn ghost">Copy Prompt</button>
-        </div>
+async function get(db, storeName, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readonly");
+    const store = tx.objectStore(storeName);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
 
-        <label class="field">
-          <span>Nano Prompt</span>
-          <textarea id="promptOut" readonly rows="10"></textarea>
-        </label>
+async function put(db, storeName, value) {
+  const tx = db.transaction(storeName, "readwrite");
+  tx.objectStore(storeName).put(value);
+  await txDone(tx);
+}
 
-        <div id="status" class="status"></div>
-      </div>
-    </aside>
-  </main>
+async function hasMigrated(db) {
+  const row = await get(db, STORE_META, "migratedFromLocalStorage");
+  return Boolean(row?.value);
+}
 
-  <div id="sheet" class="sheet" aria-hidden="true">
-    <div class="sheetHandle"></div>
-    <div class="sheetBody">
-      <div class="sheetTitle" id="sheetTitle">Edit Day</div>
-      <textarea id="ideaMobile" placeholder="Caption or idea..."></textarea>
-      <div class="row">
-        <button id="genBtnMobile" class="btn secondary">Generate</button>
-        <button id="saveBtnMobile" class="btn">Save</button>
-      </div>
-      <textarea id="promptOutMobile" readonly></textarea>
-      <button id="closeSheet" class="btn ghost full">Close</button>
-    </div>
-  </div>
+async function setMigrated(db) {
+  await put(db, STORE_META, { key: "migratedFromLocalStorage", value: true, at: Date.now() });
+}
 
-  <script type="module" src="js/app.js"></script>
-</body>
-</html>
+function safeParse(json) {
+  try { return JSON.parse(json); } catch { return null; }
+}
+
+async function migrateLocalStorageToIDB(db) {
+  if (await hasMigrated(db)) return;
+
+  const monthsToImport = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (k.startsWith(`${NS_OLD}.month.`)) {
+      const yyyymm = k.replace(`${NS_OLD}.month.`, "");
+      const raw = localStorage.getItem(k);
+      const parsed = safeParse(raw) || {};
+      monthsToImport.push({ yyyymm, data: parsed, updatedAt: Date.now() });
+    }
+  }
+
+  for (const item of monthsToImport) {
+    await put(db, STORE_MONTHS, item);
+  }
+
+  const last = localStorage.getItem(`${NS_OLD}.lastMonth`);
+  if (last) {
+    await put(db, STORE_META, { key: "lastMonth", value: last, at: Date.now() });
+  }
+
+  await setMigrated(db);
+}
+
+export async function initDB() {
+  const db = await openDB();
+  await migrateLocalStorageToIDB(db);
+  return db;
+}
+
+export async function loadMonth(db, yyyymm) {
+  const row = await get(db, STORE_MONTHS, yyyymm);
+  return row?.data || {};
+}
+
+export async function saveMonth(db, yyyymm, data) {
+  await put(db, STORE_MONTHS, {
+    yyyymm,
+    data: data || {},
+    updatedAt: Date.now()
+  });
+  await put(db, STORE_META, { key: "lastMonth", value: yyyymm, at: Date.now() });
+}
+
+export async function lastMonthOrNow(db) {
+  const row = await get(db, STORE_META, "lastMonth");
+  if (row?.value) return row.value;
+
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
