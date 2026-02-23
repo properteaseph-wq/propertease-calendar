@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b0f19" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="css/app.css" />
   <title>Propertease Planner</title>
 </head>
 <body>
@@ -14,28 +14,91 @@
       <div class="logo-dot"></div>
       <div>
         <div class="title">Propertease Planner</div>
-        <div class="sub">Offline-first PWA</div>
+        <div class="sub">Google Calendar month view, offline-first</div>
       </div>
     </div>
 
     <div class="controls">
-      <input id="month" type="month" />
+      <button id="prevBtn" class="btn ghost" title="Previous month">◀</button>
+      <div class="monthWrap">
+        <div id="monthLabel" class="monthLabel">March 2026</div>
+        <input id="monthPicker" type="month" class="monthPicker" aria-label="Pick month" />
+      </div>
+      <button id="nextBtn" class="btn ghost" title="Next month">▶</button>
+      <button id="todayBtn" class="btn secondary">Today</button>
       <button id="saveBtn" class="btn">Save</button>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="card">
-      <h2>Month Notes</h2>
-      <p class="hint">This auto-loads per month. Works offline after first load.</p>
-      <textarea id="notes" placeholder="Type something…"></textarea>
-      <div class="row">
-        <button id="copyBtn" class="btn secondary">Copy</button>
-        <span id="status" class="status"></span>
+  <main class="shell">
+    <aside class="side">
+      <div class="panel">
+        <div class="panelTitle">Categories</div>
+        <div id="categoryList" class="chipGrid"></div>
+
+        <div class="panelTitle">Mode</div>
+        <label class="toggle">
+          <input id="toggleProject" type="checkbox" />
+          <span>Allow project mention (optional)</span>
+        </label>
+
+        <div class="panelTitle">Style Pack</div>
+        <select id="stylePack" class="select">
+          <option value="editorial">Modern Editorial</option>
+          <option value="clean3d">Clean 3D UI</option>
+          <option value="luxMinimal">Luxury Minimal</option>
+          <option value="boldInfographic">Bold Infographic</option>
+        </select>
       </div>
+    </aside>
+
+    <section class="main">
+      <div class="calendarHead">
+        <div class="dow">Sun</div><div class="dow">Mon</div><div class="dow">Tue</div><div class="dow">Wed</div><div class="dow">Thu</div><div class="dow">Fri</div><div class="dow">Sat</div>
+      </div>
+
+      <div id="grid" class="grid" aria-label="Month calendar grid"></div>
     </section>
+
+    <aside class="right">
+      <div class="panel">
+        <div class="panelTitle">Selected Day</div>
+        <div id="selectedMeta" class="meta">Select a date</div>
+
+        <label class="field">
+          <span>Caption or Idea</span>
+          <textarea id="idea" placeholder="Educational, authority-first..." rows="6"></textarea>
+        </label>
+
+        <div class="row">
+          <button id="genBtn" class="btn secondary">Generate Nano Prompt</button>
+          <button id="copyBtn" class="btn ghost">Copy Prompt</button>
+        </div>
+
+        <label class="field">
+          <span>Nano Prompt</span>
+          <textarea id="promptOut" readonly rows="10"></textarea>
+        </label>
+
+        <div id="status" class="status"></div>
+      </div>
+    </aside>
   </main>
 
-  <script src="app.js"></script>
+  <div id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheetHandle"></div>
+    <div class="sheetBody">
+      <div class="sheetTitle" id="sheetTitle">Edit Day</div>
+      <textarea id="ideaMobile" placeholder="Caption or idea..."></textarea>
+      <div class="row">
+        <button id="genBtnMobile" class="btn secondary">Generate</button>
+        <button id="saveBtnMobile" class="btn">Save</button>
+      </div>
+      <textarea id="promptOutMobile" readonly></textarea>
+      <button id="closeSheet" class="btn ghost full">Close</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
