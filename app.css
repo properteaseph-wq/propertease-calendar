@@ -10,6 +10,41 @@ body{
               var(--bg);
   color:var(--text);
 }
+
+.savePill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  color: var(--muted);
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  user-select:none;
+}
+
+.saveDot{
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background: rgba(255,255,255,.25);
+}
+
+.savePill.saved{
+  color: #cfe0ff;
+  border-color: rgba(43,102,255,.30);
+  background: rgba(43,102,255,.12);
+}
+
+.savePill.saving{
+  color: #ffd9f0;
+  border-color: rgba(255,80,180,.28);
+  background: rgba(255,80,180,.10);
+}
 .topbar{
   position:sticky; top:0; z-index:10;
   display:flex; align-items:center; justify-content:space-between;
