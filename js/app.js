@@ -2,6 +2,7 @@ import { fmtMonthLabel, yyyymm, buildMonthGrid } from "./ui.js";
 import { initDB, loadMonth, saveMonth, lastMonthOrNow } from "./db.js";
 import { generateNanoPrompt } from "./prompt-engine.js";
 
+const savePill = el("savePill");
 const el = (id) => document.getElementById(id);
 
 const gridEl = el("grid");
@@ -56,7 +57,32 @@ function setStatus(msg) {
   clearTimeout(setStatus._t);
   setStatus._t = setTimeout(() => (status.textContent = ""), 1500);
 }
+function setSavePill(mode, text) {
+  if (!savePill) return;
 
+  savePill.classList.remove("saving", "saved");
+
+  // Ensure dot exists
+  if (!savePill.dataset.dotReady) {
+    const dot = document.createElement("span");
+    dot.className = "saveDot";
+    savePill.prepend(dot);
+    savePill.dataset.dotReady = "1";
+  }
+
+  if (mode) savePill.classList.add(mode);
+  savePill.lastChild.textContent = text;
+}
+
+function showSavedMoment() {
+  setSavePill("saved", "Saved locally");
+  clearTimeout(showSavedMoment._t);
+  showSavedMoment._t = setTimeout(() => {
+    // Return to calm offline label
+    const online = navigator.onLine;
+    setSavePill("", online ? "Online" : "Offline");
+  }, 1400);
+}
 function openSheet() {
   sheet.classList.add("open");
   sheet.setAttribute("aria-hidden", "false");
