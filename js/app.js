@@ -285,7 +285,13 @@ function registerSW() {
   }
 }
 
-loadCurrentMonth();
-setupNav();
-renderAll();
-registerSW();
+async function boot() {
+  db = await initDB();
+  state.month = await lastMonthOrNow(db);
+  await loadCurrentMonth();
+  setupNav();
+  renderAll();
+  registerSW();
+}
+
+boot();
