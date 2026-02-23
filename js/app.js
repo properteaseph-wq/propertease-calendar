@@ -43,8 +43,9 @@ const CATEGORIES = [
   "FAQs"
 ];
 
+let db;
 let state = {
-  month: lastMonthOrNow(),
+  month: "1970-01",
   monthData: {},
   selectedDayKey: null,
   selectedCategory: "Buyer Tips"
