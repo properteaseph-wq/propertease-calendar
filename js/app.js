@@ -195,48 +195,48 @@ function syncEditorToData() {
 }
 
 function setupNav() {
-  prevBtn.onclick = () => shiftMonth(-1);
-  nextBtn.onclick = () => shiftMonth(1);
+  prevBtn.onclick = async () => await shiftMonth(-1);
+nextBtn.onclick = async () => await shiftMonth(1);
 
-  todayBtn.onclick = () => {
+  todayBtn.onclick = async () => {
     const now = new Date();
     const mm = yyyymm(now);
     if (mm !== state.month) {
       syncEditorToData();
-      saveCurrentMonth();
+     await saveCurrentMonth();
       state.month = mm;
-      loadCurrentMonth();
+     await loadCurrentMonth();
       renderAll();
     }
     const k = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
     selectDay(k, false);
   };
 
-  monthPickerEl.onchange = () => {
-    syncEditorToData();
-    saveCurrentMonth();
-    state.month = monthPickerEl.value;
-    loadCurrentMonth();
-    state.selectedDayKey = null;
-    renderAll();
-    setStatus("Loaded");
-  };
+ monthPickerEl.onchange = async () => {
+  syncEditorToData();
+  await saveCurrentMonth();
+  state.month = monthPickerEl.value;
+  await loadCurrentMonth();
+  state.selectedDayKey = null;
+  renderAll();
+  setStatus("Loaded");
+};
 
-  saveBtn.onclick = () => {
-    syncEditorToData();
-    saveCurrentMonth();
-    setStatus("Saved ✅");
-  };
+  saveBtn.onclick = async () => {
+  syncEditorToData();
+  await saveCurrentMonth();
+  setStatus("Saved ✅");
+};
 }
 
-function shiftMonth(delta) {
+async function shiftMonth(delta) {
   syncEditorToData();
-  saveCurrentMonth();
+  await saveCurrentMonth();
 
   const { y, mIndex } = monthParts(state.month);
   const d = new Date(y, mIndex + delta, 1);
   state.month = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-  loadCurrentMonth();
+  await loadCurrentMonth();
   state.selectedDayKey = null;
   renderAll();
 }
