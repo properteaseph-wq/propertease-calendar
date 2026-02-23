@@ -1,5 +1,5 @@
 import { fmtMonthLabel, yyyymm, buildMonthGrid } from "./ui.js";
-import { loadMonth, saveMonth, lastMonthOrNow } from "./db.js";
+import { initDB, loadMonth, saveMonth, lastMonthOrNow } from "./db.js";
 import { generateNanoPrompt } from "./prompt-engine.js";
 
 const el = (id) => document.getElementById(id);
